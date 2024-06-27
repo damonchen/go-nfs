@@ -19,8 +19,8 @@ const (
 	FSInfoPropertyCanSetTime = 0x0010
 )
 
-func onFSInfo(ctx context.Context, w *response, userHandle Handler) error {
-	roothandle, err := xdr.ReadOpaque(w.req.Body)
+func onFSInfo(ctx context.Context, w *Response, userHandle Handler) error {
+	roothandle, err := xdr.ReadOpaque(w.Req.Body)
 	if err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	}

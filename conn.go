@@ -40,6 +40,7 @@ type conn struct {
 	*Server
 	writeSerializer chan []byte
 	net.Conn
+	ID string 	/// for debug
 }
 
 func (c *conn) serve(ctx context.Context) {
@@ -47,6 +48,8 @@ func (c *conn) serve(ctx context.Context) {
 	defer cancel()
 	c.writeSerializer = make(chan []byte, 1)
 	go c.serializeWrites(connCtx)
+
+	Log.Infof("The client %s (%s) start serve", c.RemoteAddr().String(), c.ID)
 
 	bio := bufio.NewReader(c.Conn)
 	for {
@@ -59,7 +62,7 @@ func (c *conn) serve(ctx context.Context) {
 			}
 			return
 		}
-		Log.Tracef("request: %v", w.req)
+		Log.Tracef("The %s request: %v", c.ID, w.req)
 		err = c.handle(connCtx, w)
 		respErr := w.finish(connCtx)
 		if err != nil {
@@ -72,6 +75,26 @@ func (c *conn) serve(ctx context.Context) {
 			Log.Errorf("error sending response: %v", respErr)
 			c.Close()
 			return
+		}
+	}
+}
+
+func (c *conn) writeComplete(ctx context.Context, writer io.Writer, data []byte) (error) {
+	// 一直写，直到所有的数据都写出去了
+	written := 0
+	for {
+		select {
+		case <- ctx.Done():
+			return errors.New("done")
+		default:
+			n, err := writer.Write(data[written:])
+			if err != nil {
+				return err
+			}
+			written += n;
+			if written == len(data) {
+				return nil
+			}
 		}
 	}
 }
@@ -95,14 +118,14 @@ func (c *conn) serializeWrites(ctx context.Context) {
 			binary.BigEndian.PutUint32(fragmentBuf[:], fragmentInt)
 			n, err := writer.Write(fragmentBuf[:])
 			if n < 4 || err != nil {
+				Log.Errorf("write fragment buff error %s", err)
 				return
 			}
-			n, err = writer.Write(msg)
+
+			// 一直写，直到所有的数据都写出去了
+			err = c.writeComplete(ctx, writer, msg)
 			if err != nil {
-				return
-			}
-			if n < len(msg) {
-				panic("todo: ensure writes complete fully.")
+				return 
 			}
 			if err = writer.Flush(); err != nil {
 				return
@@ -113,21 +136,24 @@ func (c *conn) serializeWrites(ctx context.Context) {
 
 // Handle a request. errors from this method indicate a failure to read or
 // write on the network stream, and trigger a disconnection of the connection.
-func (c *conn) handle(ctx context.Context, w *response) error {
+func (c *conn) handle(ctx context.Context, w *Response) error {
 	handler := c.Server.handlerFor(w.req.Header.Prog, w.req.Header.Proc)
 	if handler == nil {
 		Log.Errorf("No handler for %d.%d", w.req.Header.Prog, w.req.Header.Proc)
 		if err := w.drain(ctx); err != nil {
+			Log.Errorf("response drain error %s", err)
 			return err
 		}
 		return c.err(ctx, w, &ResponseCodeProcUnavailableError{})
 	}
 	appError := handler(ctx, w, c.Server.Handler)
 	if drainErr := w.drain(ctx); drainErr != nil {
+		Log.Errorf("response drain error %s", drainErr)
 		return drainErr
 	}
 	if appError != nil && !w.responded {
 		if err := c.err(ctx, w, appError); err != nil {
+			Log.Errorf("response app error %s", err)
 			return err
 		}
 	}
@@ -140,7 +166,7 @@ func (c *conn) handle(ctx context.Context, w *response) error {
 	return nil
 }
 
-func (c *conn) err(ctx context.Context, w *response, err error) error {
+func (c *conn) err(ctx context.Context, w *Response, err error) error {
 	select {
 	case <-ctx.Done():
 		return nil
@@ -179,7 +205,7 @@ func (r *request) String() string {
 	return fmt.Sprintf("RPC #%d (%d.%d)", r.xid, r.Header.Prog, r.Header.Proc)
 }
 
-type response struct {
+type  Response  struct {
 	*conn
 	writer    *bytes.Buffer
 	responded bool
@@ -188,7 +214,7 @@ type response struct {
 	req       *request
 }
 
-func (w *response) writeXdrHeader() error {
+func (w *Response) writeXdrHeader() error {
 	err := xdr.Write(w.writer, &w.req.xid)
 	if err != nil {
 		return err
@@ -201,7 +227,7 @@ func (w *response) writeXdrHeader() error {
 	return nil
 }
 
-func (w *response) writeHeader(code ResponseCode) error {
+func (w *Response) writeHeader(code ResponseCode) error {
 	if w.responded {
 		return ErrAlreadySent
 	}
@@ -232,7 +258,7 @@ func (w *response) writeHeader(code ResponseCode) error {
 }
 
 // Write a response to an xdr message
-func (w *response) Write(dat []byte) error {
+func (w *Response) Write(dat []byte) error {
 	if !w.responded {
 		if err := w.writeHeader(ResponseCodeSuccess); err != nil {
 			return err
@@ -251,7 +277,7 @@ func (w *response) Write(dat []byte) error {
 }
 
 // drain reads the rest of the request frame if not consumed by the handler.
-func (w *response) drain(ctx context.Context) error {
+func (w *Response) drain(ctx context.Context) error {
 	if reader, ok := w.req.Body.(*io.LimitedReader); ok {
 		if reader.N == 0 {
 			return nil
@@ -266,7 +292,7 @@ func (w *response) drain(ctx context.Context) error {
 	return io.ErrUnexpectedEOF
 }
 
-func (w *response) finish(ctx context.Context) error {
+func (w *Response) finish(ctx context.Context) error {
 	select {
 	case w.conn.writeSerializer <- w.writer.Bytes():
 		return nil
@@ -275,7 +301,7 @@ func (w *response) finish(ctx context.Context) error {
 	}
 }
 
-func (c *conn) readRequestHeader(ctx context.Context, reader *bufio.Reader) (w *response, err error) {
+func (c *conn) readRequestHeader(ctx context.Context, reader *bufio.Reader) (w *Response, err error) {
 	fragment, err := xdr.ReadUint32(reader)
 	if err != nil {
 		if xdrErr, ok := err.(*xdr2.UnmarshalError); ok {
@@ -294,6 +320,8 @@ func (c *conn) readRequestHeader(ctx context.Context, reader *bufio.Reader) (w *
 		return nil, ErrInputInvalid
 	}
 
+	Log.Debugf("Conn %s read the Request header length is %d", c.ID, reqLen)
+
 	r := io.LimitedReader{R: reader, N: int64(reqLen)}
 
 	xid, err := xdr.ReadUint32(&r)
@@ -308,6 +336,8 @@ func (c *conn) readRequestHeader(ctx context.Context, reader *bufio.Reader) (w *
 		return nil, ErrInputInvalid
 	}
 
+	Log.Debugf("Conn %s read the request xid %d and tpye %d", c.ID, xid, reqType)
+
 	req := request{
 		xid,
 		rpc.Header{},
@@ -317,7 +347,7 @@ func (c *conn) readRequestHeader(ctx context.Context, reader *bufio.Reader) (w *
 		return nil, err
 	}
 
-	w = &response{
+	w = &Response{
 		conn:     c,
 		req:      &req,
 		errorFmt: basicErrorFormatter,

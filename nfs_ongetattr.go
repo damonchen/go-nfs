@@ -8,8 +8,8 @@ import (
 	"github.com/willscott/go-nfs-client/nfs/xdr"
 )
 
-func onGetAttr(ctx context.Context, w *response, userHandle Handler) error {
-	handle, err := xdr.ReadOpaque(w.req.Body)
+func onGetAttr(ctx context.Context, w *Response, userHandle Handler) error {
+	handle, err := xdr.ReadOpaque(w.Req.Body)
 	if err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	}

@@ -8,9 +8,9 @@ import (
 	"github.com/willscott/go-nfs-client/nfs/xdr"
 )
 
-func onAccess(ctx context.Context, w *response, userHandle Handler) error {
+func onAccess(ctx context.Context, w *Response, userHandle Handler) error {
 	w.errorFmt = opAttrErrorFormatter
-	roothandle, err := xdr.ReadOpaque(w.req.Body)
+	roothandle, err := xdr.ReadOpaque(w.Req.Body)
 	if err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	}
@@ -18,7 +18,7 @@ func onAccess(ctx context.Context, w *response, userHandle Handler) error {
 	if err != nil {
 		return &NFSStatusError{NFSStatusStale, err}
 	}
-	mask, err := xdr.ReadUint32(w.req.Body)
+	mask, err := xdr.ReadUint32(w.Req.Body)
 	if err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	}

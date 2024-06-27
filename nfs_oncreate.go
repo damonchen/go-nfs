@@ -15,20 +15,20 @@ const (
 	createModeExclusive = 2
 )
 
-func onCreate(ctx context.Context, w *response, userHandle Handler) error {
+func onCreate(ctx context.Context, w *Response, userHandle Handler) error {
 	w.errorFmt = wccDataErrorFormatter
 	obj := DirOpArg{}
-	err := xdr.Read(w.req.Body, &obj)
+	err := xdr.Read(w.Req.Body, &obj)
 	if err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	}
-	how, err := xdr.ReadUint32(w.req.Body)
+	how, err := xdr.ReadUint32(w.Req.Body)
 	if err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	}
 	var attrs *SetFileAttributes
 	if how == createModeUnchecked || how == createModeGuarded {
-		sattr, err := ReadSetFileAttributes(w.req.Body)
+		sattr, err := ReadSetFileAttributes(w.Req.Body)
 		if err != nil {
 			return &NFSStatusError{NFSStatusInval, err}
 		}
@@ -36,7 +36,7 @@ func onCreate(ctx context.Context, w *response, userHandle Handler) error {
 	} else if how == createModeExclusive {
 		// read createverf3
 		var verf [8]byte
-		if err := xdr.Read(w.req.Body, &verf); err != nil {
+		if err := xdr.Read(w.Req.Body, &verf); err != nil {
 			return &NFSStatusError{NFSStatusInval, err}
 		}
 		Log.Errorf("failing create to indicate lack of support for 'exclusive' mode.")

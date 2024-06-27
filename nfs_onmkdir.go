@@ -13,15 +13,15 @@ const (
 	mkdirDefaultMode = 755
 )
 
-func onMkdir(ctx context.Context, w *response, userHandle Handler) error {
+func onMkdir(ctx context.Context, w *Response, userHandle Handler) error {
 	w.errorFmt = wccDataErrorFormatter
 	obj := DirOpArg{}
-	err := xdr.Read(w.req.Body, &obj)
+	err := xdr.Read(w.Req.Body, &obj)
 	if err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	}
 
-	attrs, err := ReadSetFileAttributes(w.req.Body)
+	attrs, err := ReadSetFileAttributes(w.Req.Body)
 	if err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	}

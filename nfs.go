@@ -33,6 +33,6 @@ func init() {
 	_ = RegisterMessageHandler(nfsServiceID, uint32(NFSProcedureCommit), onCommit)           // 21
 }
 
-func onNull(ctx context.Context, w *response, userHandle Handler) error {
+func onNull(ctx context.Context, w *Response, userHandle Handler) error {
 	return w.Write([]byte{})
 }

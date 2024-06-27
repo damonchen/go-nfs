@@ -17,17 +17,17 @@ func init() {
 	_ = RegisterMessageHandler(mountServiceID, uint32(MountProcUmnt), onUMount)
 }
 
-func onMountNull(ctx context.Context, w *response, userHandle Handler) error {
+func onMountNull(ctx context.Context, w *Response, userHandle Handler) error {
 	return w.writeHeader(ResponseCodeSuccess)
 }
 
-func onMount(ctx context.Context, w *response, userHandle Handler) error {
+func onMount(ctx context.Context, w *Response, userHandle Handler) error {
 	// TODO: auth check.
-	dirpath, err := xdr.ReadOpaque(w.req.Body)
+	dirpath, err := xdr.ReadOpaque(w.Req.Body)
 	if err != nil {
 		return err
 	}
-	mountReq := MountRequest{Header: w.req.Header, Dirpath: dirpath}
+	mountReq := MountRequest{Header: w.Req.Header, Dirpath: dirpath}
 	status, handle, flavors := userHandle.Mount(ctx, w.conn, mountReq)
 
 	if err := w.writeHeader(ResponseCodeSuccess); err != nil {
@@ -48,8 +48,8 @@ func onMount(ctx context.Context, w *response, userHandle Handler) error {
 	return w.Write(writer.Bytes())
 }
 
-func onUMount(ctx context.Context, w *response, userHandle Handler) error {
-	_, err := xdr.ReadOpaque(w.req.Body)
+func onUMount(ctx context.Context, w *Response, userHandle Handler) error {
+	_, err := xdr.ReadOpaque(w.Req.Body)
 	if err != nil {
 		return err
 	}

@@ -10,9 +10,9 @@ import (
 )
 
 // onCommit - note this is a no-op, as we always push writes to the backing store.
-func onCommit(ctx context.Context, w *response, userHandle Handler) error {
+func onCommit(ctx context.Context, w *Response, userHandle Handler) error {
 	w.errorFmt = wccDataErrorFormatter
-	handle, err := xdr.ReadOpaque(w.req.Body)
+	handle, err := xdr.ReadOpaque(w.Req.Body)
 	if err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	}

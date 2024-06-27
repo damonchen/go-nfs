@@ -26,7 +26,7 @@ func (ROFS) Capabilities() billy.Capability {
 }
 
 func main() {
-	listener, err := net.Listen("tcp", ":0")
+	listener, err := net.Listen("tcp", "0.0.0.0:111")
 	if err != nil {
 		fmt.Printf("Failed to listen: %v\n", err)
 		return
@@ -39,10 +39,11 @@ func main() {
 		fmt.Printf("Failed to create file: %v\n", err)
 		return
 	}
-	_, _ = f.Write([]byte("hello world"))
+	_, _ = f.Write([]byte("hello world in example"))
 	_ = f.Close()
 
 	handler := nfshelper.NewNullAuthHandler(ROFS{mem})
 	cacheHelper := nfshelper.NewCachingHandler(handler, 1024)
+	nfs.Log.SetLevel(nfs.DebugLevel)
 	fmt.Printf("%v", nfs.Serve(listener, cacheHelper))
 }

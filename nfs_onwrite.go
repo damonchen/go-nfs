@@ -28,10 +28,10 @@ type writeArgs struct {
 	Data   []byte
 }
 
-func onWrite(ctx context.Context, w *response, userHandle Handler) error {
+func onWrite(ctx context.Context, w *Response, userHandle Handler) error {
 	w.errorFmt = wccDataErrorFormatter
 	var req writeArgs
-	if err := xdr.Read(w.req.Body, &req); err != nil {
+	if err := xdr.Read(w.Req.Body, &req); err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	}
 

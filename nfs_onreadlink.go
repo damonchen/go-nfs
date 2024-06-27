@@ -8,9 +8,9 @@ import (
 	"github.com/willscott/go-nfs-client/nfs/xdr"
 )
 
-func onReadLink(ctx context.Context, w *response, userHandle Handler) error {
+func onReadLink(ctx context.Context, w *Response, userHandle Handler) error {
 	w.errorFmt = opAttrErrorFormatter
-	handle, err := xdr.ReadOpaque(w.req.Body)
+	handle, err := xdr.ReadOpaque(w.Req.Body)
 	if err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	}

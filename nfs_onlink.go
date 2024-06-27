@@ -10,19 +10,19 @@ import (
 )
 
 // Backing billy.FS doesn't support hard links
-func onLink(ctx context.Context, w *response, userHandle Handler) error {
+func onLink(ctx context.Context, w *Response, userHandle Handler) error {
 	w.errorFmt = wccDataErrorFormatter
 	obj := DirOpArg{}
-	err := xdr.Read(w.req.Body, &obj)
+	err := xdr.Read(w.Req.Body, &obj)
 	if err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	}
-	attrs, err := ReadSetFileAttributes(w.req.Body)
+	attrs, err := ReadSetFileAttributes(w.Req.Body)
 	if err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	}
 
-	target, err := xdr.ReadOpaque(w.req.Body)
+	target, err := xdr.ReadOpaque(w.Req.Body)
 	if err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	}

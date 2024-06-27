@@ -23,15 +23,15 @@ const (
 
 // Backing billy.FS doesn't support creation of
 // char, block, socket, or fifo pipe nodes
-func onMknod(ctx context.Context, w *response, userHandle Handler) error {
+func onMknod(ctx context.Context, w *Response, userHandle Handler) error {
 	w.errorFmt = wccDataErrorFormatter
 	obj := DirOpArg{}
-	err := xdr.Read(w.req.Body, &obj)
+	err := xdr.Read(w.Req.Body, &obj)
 	if err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	}
 
-	ftype, err := xdr.ReadUint32(w.req.Body)
+	ftype, err := xdr.ReadUint32(w.Req.Body)
 	if err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	}
@@ -73,15 +73,15 @@ func onMknod(ctx context.Context, w *response, userHandle Handler) error {
 	case FTYPE_NF3CHR:
 	case FTYPE_NF3BLK:
 		// read devicedata3 = {sattr3, specdata3}
-		attrs, err := ReadSetFileAttributes(w.req.Body)
+		attrs, err := ReadSetFileAttributes(w.Req.Body)
 		if err != nil {
 			return &NFSStatusError{NFSStatusInval, err}
 		}
-		specData1, err := xdr.ReadUint32(w.req.Body)
+		specData1, err := xdr.ReadUint32(w.Req.Body)
 		if err != nil {
 			return &NFSStatusError{NFSStatusInval, err}
 		}
-		specData2, err := xdr.ReadUint32(w.req.Body)
+		specData2, err := xdr.ReadUint32(w.Req.Body)
 		if err != nil {
 			return &NFSStatusError{NFSStatusInval, err}
 		}
@@ -96,7 +96,7 @@ func onMknod(ctx context.Context, w *response, userHandle Handler) error {
 
 	case FTYPE_NF3SOCK:
 		// read sattr3
-		attrs, err := ReadSetFileAttributes(w.req.Body)
+		attrs, err := ReadSetFileAttributes(w.Req.Body)
 		if err != nil {
 			return &NFSStatusError{NFSStatusInval, err}
 		}
@@ -109,7 +109,7 @@ func onMknod(ctx context.Context, w *response, userHandle Handler) error {
 
 	case FTYPE_NF3FIFO:
 		// read sattr3
-		attrs, err := ReadSetFileAttributes(w.req.Body)
+		attrs, err := ReadSetFileAttributes(w.Req.Body)
 		if err != nil {
 			return &NFSStatusError{NFSStatusInval, err}
 		}

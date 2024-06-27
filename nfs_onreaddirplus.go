@@ -32,10 +32,10 @@ func joinPath(parent []string, elements ...string) []string {
 	return joinedPath
 }
 
-func onReadDirPlus(ctx context.Context, w *response, userHandle Handler) error {
+func onReadDirPlus(ctx context.Context, w *Response, userHandle Handler) error {
 	w.errorFmt = opAttrErrorFormatter
 	obj := readDirPlusArgs{}
-	if err := xdr.Read(w.req.Body, &obj); err != nil {
+	if err := xdr.Read(w.Req.Body, &obj); err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	}
 

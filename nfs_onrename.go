@@ -12,10 +12,10 @@ import (
 
 var doubleWccErrorBody = [16]byte{}
 
-func onRename(ctx context.Context, w *response, userHandle Handler) error {
+func onRename(ctx context.Context, w *Response, userHandle Handler) error {
 	w.errorFmt = errFormatterWithBody(doubleWccErrorBody[:])
 	from := DirOpArg{}
-	err := xdr.Read(w.req.Body, &from)
+	err := xdr.Read(w.Req.Body, &from)
 	if err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	}
@@ -25,7 +25,7 @@ func onRename(ctx context.Context, w *response, userHandle Handler) error {
 	}
 
 	to := DirOpArg{}
-	if err = xdr.Read(w.req.Body, &to); err != nil {
+	if err = xdr.Read(w.Req.Body, &to); err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	}
 	fs2, toPath, err := userHandle.FromHandle(to.Handle)

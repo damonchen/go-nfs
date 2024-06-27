@@ -9,10 +9,10 @@ import (
 	"github.com/willscott/go-nfs-client/nfs/xdr"
 )
 
-func onRemove(ctx context.Context, w *response, userHandle Handler) error {
+func onRemove(ctx context.Context, w *Response, userHandle Handler) error {
 	w.errorFmt = wccDataErrorFormatter
 	obj := DirOpArg{}
-	if err := xdr.Read(w.req.Body, &obj); err != nil {
+	if err := xdr.Read(w.Req.Body, &obj); err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	}
 	fs, path, err := userHandle.FromHandle(obj.Handle)

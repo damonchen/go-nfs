@@ -9,9 +9,9 @@ import (
 	"github.com/willscott/go-nfs-client/nfs/xdr"
 )
 
-func onSetAttr(ctx context.Context, w *response, userHandle Handler) error {
+func onSetAttr(ctx context.Context, w *Response, userHandle Handler) error {
 	w.errorFmt = wccDataErrorFormatter
-	handle, err := xdr.ReadOpaque(w.req.Body)
+	handle, err := xdr.ReadOpaque(w.Req.Body)
 	if err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	}
@@ -20,7 +20,7 @@ func onSetAttr(ctx context.Context, w *response, userHandle Handler) error {
 	if err != nil {
 		return &NFSStatusError{NFSStatusStale, err}
 	}
-	attrs, err := ReadSetFileAttributes(w.req.Body)
+	attrs, err := ReadSetFileAttributes(w.Req.Body)
 	if err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	}
@@ -35,12 +35,12 @@ func onSetAttr(ctx context.Context, w *response, userHandle Handler) error {
 	}
 
 	// see if there's a "guard"
-	if guard, err := xdr.ReadUint32(w.req.Body); err != nil {
+	if guard, err := xdr.ReadUint32(w.Req.Body); err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	} else if guard != 0 {
 		// read the ctime.
 		t := FileTime{}
-		if err := xdr.Read(w.req.Body, &t); err != nil {
+		if err := xdr.Read(w.Req.Body, &t); err != nil {
 			return &NFSStatusError{NFSStatusInval, err}
 		}
 		attr := ToFileAttribute(info, fullPath)

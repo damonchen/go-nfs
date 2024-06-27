@@ -28,10 +28,10 @@ type readDirEntity struct {
 	Next   bool
 }
 
-func onReadDir(ctx context.Context, w *response, userHandle Handler) error {
+func onReadDir(ctx context.Context, w *Response, userHandle Handler) error {
 	w.errorFmt = opAttrErrorFormatter
 	obj := readDirArgs{}
-	err := xdr.Read(w.req.Body, &obj)
+	err := xdr.Read(w.Req.Body, &obj)
 	if err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	}

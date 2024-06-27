@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"net"
 	"time"
@@ -33,7 +34,7 @@ func RegisterMessageHandler(protocol uint32, proc uint32, handler HandleFunc) er
 }
 
 // HandleFunc represents a handler for a specific protocol message.
-type HandleFunc func(ctx context.Context, w *response, userHandler Handler) error
+type HandleFunc func(ctx context.Context, w *Response, userHandler Handler) error
 
 // TODO: store directly as a uint64 for more efficient lookups
 type registeredHandlerID struct {
@@ -55,6 +56,7 @@ func (s *Server) Serve(l net.Listener) error {
 			return err
 		}
 	}
+	Log.Infof("The server id is %+v", hex.EncodeToString(s.ID[:]))
 
 	var tempDelay time.Duration
 
@@ -75,6 +77,7 @@ func (s *Server) Serve(l net.Listener) error {
 			}
 			return err
 		}
+		Log.Infof("A new client %s come in ", conn.RemoteAddr().String())
 		tempDelay = 0
 		c := s.newConn(conn)
 		go c.serve(baseCtx)
@@ -82,9 +85,12 @@ func (s *Server) Serve(l net.Listener) error {
 }
 
 func (s *Server) newConn(nc net.Conn) *conn {
+	var ID [8]byte
+	rand.Reader.Read(ID[:])
 	c := &conn{
 		Server: s,
 		Conn:   nc,
+		ID: hex.EncodeToString(ID[:]),
 	}
 	return c
 }

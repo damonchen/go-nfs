@@ -26,10 +26,10 @@ func lookupSuccessResponse(handle []byte, entPath, dirPath []string, fs billy.Fi
 	return writer.Bytes(), nil
 }
 
-func onLookup(ctx context.Context, w *response, userHandle Handler) error {
+func onLookup(ctx context.Context, w *Response, userHandle Handler) error {
 	w.errorFmt = opAttrErrorFormatter
 	obj := DirOpArg{}
-	err := xdr.Read(w.req.Body, &obj)
+	err := xdr.Read(w.Req.Body, &obj)
 	if err != nil {
 		return &NFSStatusError{NFSStatusInval, err}
 	}
